@@ -1,0 +1,29 @@
+FROM java:7
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# install common stuff
+RUN apt-get -qq update \
+    && apt-get -qqy install \
+        curl \
+        zip \
+        unzip \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# install gradle
+ONBUILD WORKDIR /usr/bin
+ONBUILD COPY .gradleversion /.gradleversion
+
+ONBUILD RUN export GRADLE_VERSION=$(cat /.gradleversion) \
+        && curl -sLO https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip \
+        && unzip gradle-${GRADLE_VERSION}-bin.zip \
+        && ln -s gradle-${GRADLE_VERSION} gradle \
+        && rm gradle-${GRADLE_VERSION}-bin.zip
+
+ONBUILD ENV GRADLE_HOME /usr/bin/gradle
+ONBUILD ENV PATH $PATH:$GRADLE_HOME/bin
+
+WORKDIR /data
+
+CMD ["gradle", "--version"]
